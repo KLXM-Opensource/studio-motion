@@ -1,0 +1,11 @@
+{
+    "name": "klxm/studio-motion",
+    "description": "KLXM Studio – Motion: Animationen per Drag & Drop, Zeichnen und Bibliothek gestalten und als Block auf Seiten zeigen (SVG + CSS, CSP-tauglich)",
+    "type": "klxm-studio-extension",
+    "license": "MIT",
+    "keywords": ["klxm-studio", "klxm-studio-extension", "animation", "svg", "motion"],
+    "homepage": "https://studio.klxm.de",
+    "authors": [{ "name": "KLXM Crossmedia GmbH and contributors" }],
+    "require": { "php": ">=8.4.1" },
+    "extra": { "klxm-studio": { "entry": "extension.php", "requires-core": ">=1.0.0" } }
+}

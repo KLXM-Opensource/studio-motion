@@ -1,0 +1,6 @@
+/* KLXM Motion – Block „Animation“ (blocks/motion.php): Rahmen und Größen; Bewegung steckt in media/motion/m{id}-{hash}.css */
+.mo-fig{margin:0 auto;max-width:100%}
+.mo-fig--wide{max-width:min(100%,64rem)}.mo-fig--medium{max-width:min(100%,44rem)}.mo-fig--small{max-width:min(100%,28rem)}
+.mo{display:block;width:100%;height:auto;overflow:visible}
+.mo-cap{margin-top:.6rem;font-size:.9em;opacity:.75;text-align:center}
+.mo-empty{padding:1.5rem;border:2px dashed currentColor;border-radius:12px;opacity:.6;text-align:center}

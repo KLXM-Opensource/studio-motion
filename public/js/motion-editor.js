@@ -22,6 +22,7 @@
   var s = function (tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs || {}) { if (attrs[k] !== null && attrs[k] !== undefined) e.setAttribute(k, attrs[k]); } return e; };
   var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var r3 = function (n) { return Math.round(n * 1000) / 1000; };
+  var de = function (n, d) { return (+n).toLocaleString('de-DE', { maximumFractionDigits: d == null ? 2 : d }); };
   var uid = function () { return 'e' + Math.random().toString(36).slice(2, 8); };
   var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
   var byId = function (id) { return scene.els.find(function (e) { return e.id === id; }) || null; };
@@ -370,6 +371,10 @@
     shake: [T('Wackeln'), [{ r: 0 }, { r: -8 }, { r: 8 }, { r: -5 }, { r: 0 }]], float: [T('Schweben'), [{ dy: 0 }, { dy: -14 }, { dy: 0 }]],
     draw: [T('Linie zeichnen'), [{ draw: 0 }, { draw: 1 }], 'ease-in-out'], out: [T('Ausblenden'), [{ o: 1 }, { o: 0 }]],
   };
+  function keyLabel(el) {
+    var here = (el.kf || []).some(function (q) { return Math.abs(q.t - u()) < .004; });
+    return here ? T('Schlüsselbild aktualisieren') : T('Schlüsselbild bei {t} s', { t: de(time) });
+  }
   var PRESET_ICON = { fade: '◐', left: '→', right: '←', up: '↑', down: '↓', zoom: '⤢', pop: '✦', spin: '↻', pulse: '◉', shake: '〰', float: '⇕', draw: '✎', out: '◑' };
   function applyPreset(key, startS, lenS) {
     var el = cur(), p = PRESETS[key]; if (!el || !p) return;
@@ -395,7 +400,7 @@
     if (!el) {
       props.innerHTML = '<div class="mo-sec"><h3 class="mo-h">' + esc(T('Fläche')) + '</h3>'
         + '<div class="mo-grid2">' + field(T('Breite'), num('sw_w', scene.w, 10, 80)) + field(T('Höhe'), num('sw_h', scene.h, 10, 60)) + '</div>'
-        + '<div class="mo-seg">' + [['16:9', 800, 450], ['4:3', 800, 600], ['1:1', 600, 600], [T('Banner'), 1200, 400], [T('Hochformat'), 450, 800]].map(function (f) {
+        + '<div class="mo-seg">' + [['16:9', 800, 450], ['4:3', 800, 600], ['1:1', 600, 600], ['3:1', 1200, 400], ['9:16', 450, 800]].map(function (f) {
           return '<button type="button" class="mo-chip' + (scene.w === f[1] && scene.h === f[2] ? ' is-on' : '') + '" data-size="' + f[1] + 'x' + f[2] + '">' + esc(f[0]) + '</button>'; }).join('') + '</div>'
         + field(T('Hintergrund'), color('sc_bg', scene.bg))
         + '<div class="mo-grid2">' + field(T('Dauer (Sekunden)'), num('sc_dur', scene.dur, .1, .5)) + field(T('Start'), '<select data-p="sc_trigger">'
@@ -416,14 +421,16 @@
       + '<button type="button" class="mo-ib mo-ib--ghost mo-ib--danger" data-act="del" title="' + esc(T('Löschen')) + ' (⌫)" aria-label="' + esc(T('Löschen')) + '">' + I('M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13') + '</button></div></div>';
     // Bewegung zuerst – das Wichtigste dieses Werkzeugs
     html += '<div class="mo-sec"><h3 class="mo-h">' + esc(T('Bewegung')) + (hasKf ? ' <span class="mo-badge">' + esc(T('{n} Schlüsselbilder', { n: el.kf.length })) + '</span>' : '') + '</h3>'
-      + '<div class="mo-presets">' + Object.keys(PRESETS).filter(function (k) { return k !== 'draw' || canDraw; }).map(function (k) {
-          return '<button type="button" class="mo-preset' + (el._preset === k ? ' is-on' : '') + '" data-preset="' + k + '"><span aria-hidden="true">' + PRESET_ICON[k] + '</span>' + esc(PRESETS[k][0]) + '</button>'; }).join('') + '</div>'
+      + '<div class="mo-row"><button type="button" class="mo-btn mo-btn--key" data-act="key">◆ <span data-keylabel>' + esc(keyLabel(el)) + '</span></button>'
+      + (kfHere ? '<button type="button" class="mo-btn" data-act="unkey">' + esc(T('Schlüsselbild löschen')) + '</button>' : '')
+      + (hasKf ? '<button type="button" class="mo-link mo-link--danger" data-act="clearkf">' + esc(T('Bewegung entfernen')) + '</button>' : '') + '</div>'
+      + [[T('Erscheinen'), ['fade', 'left', 'right', 'up', 'down', 'zoom', 'pop']], [T('Dauerhaft'), ['pulse', 'float', 'shake', 'spin', 'draw']], [T('Verschwinden'), ['out']]].map(function (g) {
+          return '<p class="mo-pgroup">' + esc(g[0]) + '</p><div class="mo-presets">' + g[1].filter(function (k) { return k !== 'draw' || canDraw; }).map(function (k) {
+            return '<button type="button" class="mo-preset' + (el._preset === k ? ' is-on' : '') + '" data-preset="' + k + '" title="' + esc(PRESETS[k][0]) + '"><span aria-hidden="true">' + PRESET_ICON[k] + '</span><b>' + esc(PRESETS[k][0]) + '</b></button>'; }).join('') + '</div>'; }).join('')
       + '<div class="mo-grid2">' + field(T('Beginn (s)'), '<input type="number" data-pre="start" value="' + (Math.round(time * 10) / 10) + '" step="0.1" min="0">')
       + field(T('Dauer (s)'), '<input type="number" data-pre="len" value="' + (Math.round(Math.min(1, scene.dur) * 10) / 10) + '" step="0.1" min="0.1">') + '</div>'
       + field(T('Verlauf'), '<select data-p="ease">' + [['ease-in-out', T('sanft')], ['ease-out', T('abbremsen')], ['ease-in', T('beschleunigen')], ['linear', T('gleichmäßig')], ['spring', T('federnd')]].map(function (o) { return '<option value="' + o[0] + '"' + (el.ease === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>')
-      + '<div class="mo-row"><button type="button" class="mo-btn mo-btn--key" data-act="key">◆ ' + esc(kfHere ? T('Schlüsselbild aktualisieren') : T('Schlüsselbild bei {t} s', { t: Math.round(time * 100) / 100 })) + '</button>'
-      + (kfHere ? '<button type="button" class="mo-btn" data-act="unkey">' + esc(T('Schlüsselbild löschen')) + '</button>' : '')
-      + (hasKf ? '<button type="button" class="mo-btn mo-btn--danger" data-act="clearkf">' + esc(T('Bewegung entfernen')) + '</button>' : '') + '</div>';
+
     if (kfHere) html += '<div class="mo-grid2 mo-kf">' + field(T('Versatz X'), num('k_dx', kfHere.dx)) + field(T('Versatz Y'), num('k_dy', kfHere.dy)) + field(T('Skalierung'), num('k_s', kfHere.s, .05, 0))
       + field(T('Drehung °'), num('k_r', kfHere.r)) + field(T('Deckkraft'), num('k_o', kfHere.o, .05, 0)) + (canDraw ? field(T('Gezeichnet'), num('k_draw', kfHere.draw, .05, 0)) : '') + '</div>';
     html += '<p class="mo-hint">' + esc(hasKf ? T('Abspielkopf unten verschieben und das Element ziehen oder drehen – so entsteht dort ein Schlüsselbild.') : T('Fertige Bewegung wählen – oder unten die Zeit wählen und ein Schlüsselbild setzen.')) + '</p></div>';
@@ -497,21 +504,22 @@
     var w = body.clientWidth - LW - 16;
     ruler.innerHTML = '';
     var step = scene.dur > 20 ? 5 : scene.dur > 8 ? 1 : .5;
-    for (var t = 0; t <= scene.dur + 1e-6; t += step) { var m = h('span', { class: 'mo-tick' }, r3(t) + 's'); m.style.left = xOf(t / scene.dur) + 'px'; ruler.append(m); }
+    for (var t = 0; t <= scene.dur + 1e-6; t += step) { var m = h('span', { class: 'mo-tick' }, de(t, 1) + ' s'); m.style.left = xOf(t / scene.dur) + 'px'; ruler.append(m); }
     rows.innerHTML = '';
     scene.els.slice().reverse().forEach(function (el) {
       var r = h('div', { class: 'mo-trow' + (el.id === sel ? ' is-sel' : ''), 'data-row': el.id });
-      r.innerHTML = '<button type="button" class="mo-tname" data-sel="' + esc(el.id) + '">' + esc(el.name || el.type) + '</button>';
+      r.innerHTML = '<button type="button" class="mo-tname" data-sel="' + esc(el.id) + '"><i aria-hidden="true">' + (el.type === 'lib' ? ({ ui: '▢', icon: '★', shape: '〜' }[(LIB[el.lib] || {}).group] || '•') : ({ rect: '▭', ellipse: '◯', path: '✎', text: 'T', image: '▣' }[el.type] || '•')) + '</i>' + esc(el.name || el.type) + '</button>';
       var kf = el.kf || [];
       if (kf.length > 1) { var bar = h('i', { class: 'mo-span' }); bar.style.left = xOf(kf[0].t) + 'px'; bar.style.width = Math.max(2, xOf(kf[kf.length - 1].t) - xOf(kf[0].t)) + 'px'; r.append(bar); }
-      if (!kf.length && el.id === sel) { var hint = h('span', { class: 'mo-rowhint' }, esc(T('Bewegung rechts wählen oder ◆ setzen'))); hint.style.left = (LW + 8) + 'px'; r.append(hint); }
-      kf.forEach(function (k, i) { var d = h('button', { type: 'button', class: 'mo-kd', 'data-kd': el.id + ':' + i, title: r3(k.t * scene.dur) + ' s', 'aria-label': T('Schlüsselbild bei {t} s', { t: r3(k.t * scene.dur) }) }); d.style.left = xOf(k.t) + 'px'; r.append(d); });
+      if (!kf.length) { var hint = h('span', { class: 'mo-rowhint' }, T('Bewegung rechts wählen oder ◆ setzen')); hint.style.left = (LW + 8) + 'px'; r.append(hint); }
+      kf.forEach(function (k, i) { var d = h('button', { type: 'button', class: 'mo-kd', 'data-kd': el.id + ':' + i, title: de(k.t * scene.dur) + ' s', 'aria-label': T('Schlüsselbild bei {t} s', { t: de(k.t * scene.dur) }) }); d.style.left = xOf(k.t) + 'px'; r.append(d); });
       rows.append(r);
     });
     void w;
     drawPlayhead();
   }
-  function drawPlayhead() { if (!head) return; head.style.left = xOf(u()) + 'px'; $('.mo-time', tl).textContent = time.toFixed(2).replace('.', ',') + ' / ' + String(scene.dur).replace('.', ',') + ' s'; }
+  function drawPlayhead() { if (!head) return; head.style.left = xOf(u()) + 'px';
+    var kl = props.querySelector('[data-keylabel]'); if (kl && cur()) kl.textContent = keyLabel(cur()); $('.mo-time', tl).textContent = de(time).replace(/^(\d+)$/, '$1,00') + ' / ' + de(scene.dur) + ' s'; }
   var tdrag = null;
   body.addEventListener('pointerdown', function (ev) {
     var kd = ev.target.closest('[data-kd]'), sb = ev.target.closest('[data-sel]');

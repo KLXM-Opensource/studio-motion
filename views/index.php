@@ -22,8 +22,9 @@ use Klxm\Motion\Templates;
     <div class="mo-item__foot">
       <a class="mo-item__title" href="<?= e(url('/admin/motion/' . (int) $it['id'])) ?>"><?= e($it['title']) ?></a>
       <small class="adm-muted"><?= e(fmt()->relative(strtotime((string) $it['updated_at']) ?: time())) ?></small>
+      <a class="adm-btn adm-btn--small adm-btn--primary" href="<?= e(url('/admin/motion/' . (int) $it['id'])) ?>"><?= e(__('Bearbeiten')) ?><span class="adm-sr">: <?= e($it['title']) ?></span></a>
       <form method="post" action="<?= e(url('/admin/motion/' . (int) $it['id'] . '/duplicate')) ?>"><?= csrf_field() ?><button class="adm-btn adm-btn--small adm-btn--ghost" type="submit"><?= e(__('Duplizieren')) ?></button></form>
-      <form method="post" action="<?= e(url('/admin/motion/' . (int) $it['id'] . '/delete')) ?>" data-confirm="<?= e(__('„{title}“ löschen?', ['title' => $it['title']])) ?>"><?= csrf_field() ?><button class="adm-btn adm-btn--small adm-btn--ghost" type="submit"><?= e(__('Löschen')) ?></button></form>
+      <form class="mo-item__del" method="post" action="<?= e(url('/admin/motion/' . (int) $it['id'] . '/delete')) ?>" data-confirm="<?= e(__('„{title}“ löschen?', ['title' => $it['title']])) ?>"><?= csrf_field() ?><button class="mo-link mo-link--danger" type="submit"><?= e(__('Löschen')) ?><span class="adm-sr">: <?= e($it['title']) ?></span></button></form>
     </div>
   </li>
   <?php endforeach; ?>

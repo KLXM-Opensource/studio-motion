@@ -18,9 +18,12 @@ use Core\Media;
  */
 final class Render
 {
+    /** Fassung der Ausgabe – mit jeder Änderung an SVG-Aufbau oder CSS erhöhen, damit alte Dateien in media/motion nicht greifen */
+    public const VERSION = 2;
+
     public static function key(array $row): string
     {
-        return 'm' . (int) $row['id'] . '-' . substr(sha1((string) $row['data']), 0, 8);
+        return 'm' . (int) $row['id'] . '-' . substr(sha1(self::VERSION . '|' . (string) $row['data']), 0, 8);
     }
 
     public static function svg(array $row, string $label = ''): string
@@ -34,8 +37,10 @@ final class Render
         if ($s['bg'] !== '' && $s['bg'] !== 'none') $out .= '<rect width="' . $s['w'] . '" height="' . $s['h'] . '" fill="' . $s['bg'] . '"/>';
         foreach ($s['els'] as $n => $el) {
             $w = $el['w']; $h = $el['h'];
-            $tf = 'translate(' . self::f($el['x']) . ' ' . self::f($el['y']) . ')' . ($el['rot'] ? ' rotate(' . self::f($el['rot']) . ' ' . self::f($w / 2) . ' ' . self::f($h / 2) . ')' : '');
-            $out .= '<g transform="' . $tf . '"' . ($el['op'] < 1 ? ' opacity="' . self::f($el['op']) . '"' : '') . '><g class="mo-a mo-a' . $n . '">';
+            // Ebenen: Position → Bewegung (.mo-a, Schlüsselbilder in Szenenrichtung) → Grunddrehung → Form.
+            // Die Grunddrehung liegt innen, damit ein Versatz „nach rechts“ auch bei gedrehten Elementen nach rechts läuft.
+            $out .= '<g transform="translate(' . self::f($el['x']) . ' ' . self::f($el['y']) . ')"' . ($el['op'] < 1 ? ' opacity="' . self::f($el['op']) . '"' : '') . '><g class="mo-a mo-a' . $n . '">'
+                . ($el['rot'] ? '<g transform="rotate(' . self::f($el['rot']) . ' ' . self::f($w / 2) . ' ' . self::f($h / 2) . ')">' : '<g>');
             $paint = ' fill="' . $el['fill'] . '"' . ($el['stroke'] !== 'none' && $el['sw'] > 0 ? ' stroke="' . $el['stroke'] . '" stroke-width="' . self::f($el['sw']) . '"' : '');
             $draw = self::hasDraw($el) ? ' pathLength="1"' : '';
             $out .= match ($el['type']) {
@@ -48,7 +53,7 @@ final class Render
                 'lib' => '<svg width="' . self::f($w) . '" height="' . self::f($h) . '" viewBox="0 0 ' . $lib[$el['lib']]['w'] . ' ' . $lib[$el['lib']]['h'] . '" preserveAspectRatio="none" color="'
                     . ($el['fill'] !== 'none' ? $el['fill'] : $lib[$el['lib']]['color']) . '" overflow="visible">' . $lib[$el['lib']]['svg'] . '</svg>',
             };
-            $out .= '</g></g>';
+            $out .= '</g></g></g>';
         }
         return $out . '</svg>';
     }
@@ -83,7 +88,7 @@ final class Render
     {
         $s = Scene::normalize(json_decode((string) $row['data'], true));
         $k = self::key($row);
-        $c = ".mo-$k .mo-a{transform-box:fill-box;transform-origin:center}\n";
+        $c = "";
         $iter = $s['loop'] ? 'infinite' : '1';
         foreach ($s['els'] as $n => $el) {
             if (!$el['kf']) continue;
@@ -92,6 +97,9 @@ final class Render
             if (end($kf)['t'] < 1) $kf[] = ['t' => 1] + end($kf);
             $draw = self::hasDraw($el);
             $sel = ".mo-$k .mo-a$n";
+            // Drehpunkt = Mitte des Elementrahmens im eigenen Koordinatensystem (wie im Editor) – nicht die Mitte des
+            // sichtbaren Inhalts (fill-box), die bei Bausteinen wie der Rakete (Flamme unten) daneben liegt
+            $c .= "$sel{transform-box:view-box;transform-origin:" . self::f($el['w'] / 2) . 'px ' . self::f($el['h'] / 2) . "px}\n";
             $name = "mo-$k-$n";
             $state = fn(array $f) => 'transform:translate(' . self::f($f['dx']) . 'px,' . self::f($f['dy']) . 'px) rotate(' . self::f($f['r']) . 'deg) scale(' . self::f($f['s']) . ');opacity:' . self::f($f['o'])
                 . ($draw ? ';stroke-dashoffset:' . self::f(1 - $f['draw']) : '');

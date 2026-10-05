@@ -141,9 +141,11 @@
     gBg.append(s('rect', { width: scene.w, height: scene.h, fill: scene.bg && scene.bg !== 'none' ? scene.bg : '#FFFFFF', class: 'mo-paper' }));
     gEls.innerHTML = ''; nodes = {};
     scene.els.forEach(function (el) {
-      var outer = s('g', { 'data-id': el.id, transform: 'translate(' + el.x + ' ' + el.y + ')' + (el.rot ? ' rotate(' + el.rot + ' ' + el.w / 2 + ' ' + el.h / 2 + ')' : ''), opacity: el.op < 1 ? el.op : null, class: 'mo-el' });
-      var inner = s('g');
-      inner.append(shapeOf(el));
+      // Ebenen wie auf der Website (Klxm\Motion\Render): Position → Bewegung → Grunddrehung → Form
+      var outer = s('g', { 'data-id': el.id, transform: 'translate(' + el.x + ' ' + el.y + ')', opacity: el.op < 1 ? el.op : null, class: 'mo-el' });
+      var inner = s('g'), base = s('g', { transform: el.rot ? 'rotate(' + el.rot + ' ' + el.w / 2 + ' ' + el.h / 2 + ')' : null });
+      base.append(shapeOf(el));
+      inner.append(base);
       outer.append(inner);
       gEls.append(outer);
       nodes[el.id] = { outer: outer, inner: inner };

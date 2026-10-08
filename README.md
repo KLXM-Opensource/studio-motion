@@ -1,7 +1,8 @@
 # KLXM Motion – Animationen gestalten (Erweiterung für KLXM Studio)
 
 Animationen direkt in der Verwaltung gestalten und als Block auf Seiten zeigen – ohne Code, ohne externe Dienste,
-passend zur strengen Content-Security-Policy von KLXM Studio (SVG + erzeugte CSS-Datei, keine Inline-Styles/-Skripte).
+passend zur strengen Content-Security-Policy von [KLXM Studio](https://github.com/KLXM-Opensource/studio)
+(SVG + erzeugte CSS-Datei, keine Inline-Styles/-Skripte). Benötigt KLXM Studio ≥ 1.0.0, PHP ≥ 8.4.
 
 ## Funktionen
 
@@ -28,7 +29,7 @@ passend zur strengen Content-Security-Policy von KLXM Studio (SVG + erzeugte CSS
 ## Installation
 
 ```bash
-composer require klxm/studio-motion      # oder Ordner nach extensions/motion kopieren
+composer require klxm/studio-motion      # oder Repository nach extensions/motion klonen
 php bin/console extensions:publish        # public/ → public/assets/ext/motion
 ```
 
@@ -44,6 +45,14 @@ Recht für Rollen: „Animationen gestalten“ (`motion.edit`). Die Tabelle `mot
   `.is-play` = Animation, `.is-vis` = sichtbar (sonst pausiert). `public/js/motion.js` setzt die Klassen.
 - Editor: `public/js/motion-editor.js` (ohne Abhängigkeiten), Vorschau rechnet dieselben Kurven wie CSS (cubic-bezier).
 - Befehle: `php bin/console motion:list`, `php bin/console motion:selftest`.
+
+## English
+
+KLXM Motion is an extension for [KLXM Studio](https://github.com/KLXM-Opensource/studio): design animations in the admin
+(full-screen editor with a library of building blocks, freehand pen, shapes, text, images, ready-made motions and a keyframe
+timeline) and place them on pages with the “Animation” block. Output is plain SVG plus a generated CSS file – no inline styles
+or scripts, so it works under a strict Content Security Policy; reduced motion and no-JS show the final frame.
+Install with `composer require klxm/studio-motion` (or clone to `extensions/motion`) and run `php bin/console extensions:publish`.
 
 ## Lizenz
 
